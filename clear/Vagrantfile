@@ -3,25 +3,26 @@
 
 Vagrant.configure("2") do |config|
   config.vm.box = "AntonioMeireles/ClearLinux"
-
-  
   config.vm.network "private_network", type: "dhcp"
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "2048"
+  end
+  config.vm.provision "shell", inline: <<-SHELL
+    usermod -aG docker clear
+    swupd bundle-add cloud-native-basic
+    mkdir /etc/sysctl.d
+    echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/60-k8s.conf
+    systemctl restart systemd-sysctl.service
+    systemctl enable kubelet.service
+    systemctl mask $(sed -n -e 's#^/dev/\([0-9a-z]*\).*#dev-\1.swap#p' /proc/swaps) 2>/dev/null
+    swapoff -a
+    echo "127.0.0.1 localhost `hostname`" > /etc/hosts
+    mkdir /etc/systemd/system/docker.service.d/
+    echo '[Service]
+    Environment="DOCKER_DEFAULT_RUNTIME=--default-runtime runc"' > /etc/systemd/system/docker.service.d/51-runtime.conf
 
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   apt-get update
-  #   apt-get install -y apache2
-  # SHELL
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    sudo systemctl restart kubelet
+  SHELL
 end
