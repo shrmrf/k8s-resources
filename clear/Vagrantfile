@@ -20,8 +20,8 @@ Vagrant.configure("2") do |config|
     mkdir /etc/systemd/system/docker.service.d/
     echo '[Service]\nEnvironment="DOCKER_DEFAULT_RUNTIME=--default-runtime runc"' > /etc/systemd/system/docker.service.d/51-runtime.conf
 
-    sudo systemctl daemon-reload
-    sudo systemctl restart docker
-    sudo systemctl restart kubelet
+    systemctl daemon-reload
+    systemctl restart docker
+    systemctl restart kubelet
   SHELL
 end
