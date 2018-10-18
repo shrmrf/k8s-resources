@@ -112,26 +112,7 @@ root@clearlinux ~ #
 ```
 
 ## Solution
-I started a clean box and did:
-```console
-clear@clearlinux ~ $ history
-    1  systemctl status crio
-    2  systemctl start crio
-    3  sudo systemctl start crio
-    4  sudo systemctl status kubelet
-    5  sudo systemctl start kubelet
-    6  sudo systemctl status kubelet
-    7  docker run hello-world
-    8  sudo systemctl status kubelet
-    9  sudo vim /usr/lib/systemd/system/kubelet.service
-   10  sudo systemctl daemon-reload
-   11  sudo systemctl restart docker
-   12  sudo systemctl restart crio
-   13  sudo systemctl restart kubelet
-   14  sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --ignore-preflight-errors=SystemVerification
-```
-
-I came up with this issue while taking a look at the `kubelet.service` file
+I came up with the solution while taking a look at the `kubelet.service` file
 ```ini
 [Unit]
 Description=kubelet: The Kubernetes Node Agent
