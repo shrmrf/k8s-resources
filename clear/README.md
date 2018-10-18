@@ -110,3 +110,52 @@ CGROUPS_MEMORY: enabled
 couldn't initialize a Kubernetes cluster
 root@clearlinux ~ # 
 ```
+
+## Solution
+I started a clean box and did:
+```console
+clear@clearlinux ~ $ history
+    1  systemctl status crio
+    2  systemctl start crio
+    3  sudo systemctl start crio
+    4  sudo systemctl status kubelet
+    5  sudo systemctl start kubelet
+    6  sudo systemctl status kubelet
+    7  docker run hello-world
+    8  sudo systemctl status kubelet
+    9  sudo vim /usr/lib/systemd/system/kubelet.service
+   10  sudo systemctl daemon-reload
+   11  sudo systemctl restart docker
+   12  sudo systemctl restart crio
+   13  sudo systemctl restart kubelet
+   14  sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --ignore-preflight-errors=SystemVerification
+```
+
+I came up with this issue while taking a look at the `kubelet.service` file
+```ini
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=http://kubernetes.io/docs/
+
+[Service]
+Environment="KUBELET_KUBECONFIG_ARGS= --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+Environment="KUBELET_SYSTEM_PODS_ARGS=--pod-manifest-path=/etc/kubernetes/manifests --allow-privileged=true"
+Environment="KUBELET_NETWORK_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/usr/libexec/cni"
+Environment="KUBELET_DNS_ARGS=--cluster-dns=10.96.0.10 --cluster-domain=cluster.local"
+Environment="KUBELET_AUTHZ_ARGS=--authorization-mode=Webhook --client-ca-file=/etc/kubernetes/pki/ca.crt"
+Environment="KUBELET_CADVISOR_ARGS=--cadvisor-port=0"
+Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///var/run/crio/crio.sock --runtime-request-timeout=30m"
+ExecStart=
+ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_CADVISOR_ARGS $KUBELET_EXTRA_ARGS
+Restart=on-failure
+StartLimitInterval=300
+StartLimitBurst=6
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`KUBELET_EXTRA_ARGS` is looking for `crio.sock` 
+
+I need to do some more exploration on how I can make it more robust/fix the (really, unneeded) dependency on `crio.service`...
