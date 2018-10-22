@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
     mkdir /etc/sysctl.d
     echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/60-k8s.conf
     systemctl restart systemd-sysctl.service
-    #systemctl enable crio.service
+    
     systemctl enable kubelet.service
     systemctl mask $(sed -n -e 's#^/dev/\([0-9a-z]*\).*#dev-\1.swap#p' /proc/swaps) 2>/dev/null
     swapoff -a
@@ -25,13 +25,6 @@ Vagrant.configure("2") do |config|
 
     systemctl daemon-reload
     systemctl restart docker
-    systemctl restart kubelet
-    
-    #systemctl start crio
-    systemctl start kubelet
-    systemctl daemon-reload
-    systemctl restart docker
-    #systemctl restart crio
     systemctl restart kubelet
   SHELL
 end
