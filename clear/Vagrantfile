@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
     mkdir /etc/systemd/system/docker.service.d/
     echo '[Service]\nEnvironment="DOCKER_DEFAULT_RUNTIME=--default-runtime runc"' > /etc/systemd/system/docker.service.d/51-runtime.conf
     mkdir /etc/systemd/system/kubelet.service.d/
-    echo '[Service]\nEnvironment="KUBELET_EXTRA_ARGS="\nEnvironment="KUBELET_NETWORK_ARGS="' > /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    echo '[Service]\nEnvironment="KUBELET_EXTRA_ARGS="' > /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
     systemctl daemon-reload
     systemctl restart docker
